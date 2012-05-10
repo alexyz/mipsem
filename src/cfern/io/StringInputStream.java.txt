@@ -1,0 +1,72 @@
+/**
+ * Cfern, a Mips/Unix/C emulator for Java
+ * Alexander Slack alexslack56@hotmail.com
+ */
+
+package cfern.io;
+import java.nio.*;
+import java.nio.charset.*;
+
+import cfern.Driver;
+
+/**
+ * An input stream that converts strings to the given charset.
+ * Output is only readable after a newline or flush().
+ * Until then, it is possible to delete/insert into the buffer.
+ */
+public class StringInputStream extends ByteBufferInputStream {
+  
+  protected final CharsetEncoder enc;
+  private final StringBuilder sb = new StringBuilder(128);
+  
+  public StringInputStream(Charset set) {
+    enc = set.newEncoder();
+  }
+  
+  /**
+   * Encode chars into the superclass buffer
+   */
+  public synchronized void flushImpl() {
+    if (sb.length() > 0) {
+      CharBuffer cbuf = CharBuffer.wrap(sb);
+      enc.encode(cbuf, buf, false);
+      if (cbuf.hasRemaining()) {
+        Driver.opt().warn("flush: bytes encoded: %d, chars encoded: %d, remaining: %d", 
+            buf.limit(), cbuf.limit(), cbuf.remaining());
+        sb.delete(0, cbuf.limit());
+      } else {
+        sb.setLength(0);
+      }
+    }
+  }
+  
+  /**
+   * Insert string into buffer given number of positions back (i.e. 0 means at
+   * end). Returns false if nothing was changed.
+   */
+  public synchronized boolean insert (int back, String s) {
+    // should use CharSequence instead of string but need the indexOf method
+    int start = sb.length() - back;
+    if (start < 0 || (s.indexOf('\n') >= 0 && back > 0))
+      return false;
+    
+    sb.insert(start, s);
+    if (sb.indexOf("\n") >= 0)
+      flush();
+    return true;
+  }
+  
+  /**
+   * Remove string from buffer given number of positions back. Returns false if
+   * nothing was changed.
+   */
+  public synchronized boolean remove (int back, int len) {
+    int start = sb.length() - back;
+    if (start < 0)
+      return false;
+    
+    sb.delete(start, start+len);
+    return true;
+  }
+  
+}

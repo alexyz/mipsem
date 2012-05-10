@@ -1,0 +1,10 @@
+Cfern, a MIPS/Linux/ELF emulator written in Java, 2005
+
+This project is historical and is not particularly functional
+
+Cfern requires a mips cross compiler to create mips binaries, 
+such as GCC, plus a cross compiled glibc, neither of which are
+particularly straightforward to create. For a starting binary,
+you can get a statically built busybox without symbols from
+
+http://busybox.net/downloads/binaries/latest/

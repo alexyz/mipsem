@@ -1,0 +1,83 @@
+/**
+ * Cfern, a Mips/Unix/C emulator for Java
+ * Alexander Slack alexslack56@hotmail.com
+ */
+
+package cfern.io;
+import java.io.*;
+import java.nio.ByteBuffer;
+
+/**
+ * Abstract class to allow reading from a byte buffer as if it was an input
+ * stream. Subclass must provide flush() method to refill the byte buffer with
+ * data.
+ * TODO should probably rename to Blocking...
+ */
+public abstract class ByteBufferInputStream extends InputStream {
+  
+  protected final ByteBuffer buf;
+  
+  protected ByteBufferInputStream() {
+    buf = ByteBuffer.wrap(new byte[4096]);
+    buf.flip();
+  }
+  
+  public synchronized int available() {
+    return buf.remaining();
+  }
+  
+  public synchronized int read() {
+    int rem = waitForBytes();
+    if (rem == 0)
+      return -1;
+    return buf.get();
+  }
+  
+  public synchronized int read(byte[] b, int off, int len) {
+    if (len == 0)
+      return 0;
+    int rem = waitForBytes();
+    if (rem == 0)
+      return 0;
+    int min = Math.min(rem, len);
+    buf.get(b, off, min);
+    return min;
+  }
+  
+  public final synchronized void flush() {
+    if (buf.remaining() == 0) {
+      buf.clear();
+      flushImpl();
+      buf.flip();
+      // notify reading thread it can try another read
+      notify();
+    }
+  }
+  
+  /**
+   * Refill the buffer implementation, it is not necessary to clear or flip or
+   * notify
+   */
+  public abstract void flushImpl();
+  
+  /**
+   * Do a blocking read if there are no bytes remaining
+   */
+  private synchronized int waitForBytes() {
+    int rem = buf.remaining();
+    if (rem > 0)
+      return rem;
+
+    flush();
+    while ((rem = buf.remaining()) == 0) {
+      try {
+        wait();
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+        return 0;
+      }
+    }
+    return rem;
+  }
+  
+}

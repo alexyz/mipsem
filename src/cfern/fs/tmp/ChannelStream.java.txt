@@ -1,0 +1,78 @@
+/**
+ * Cfern, a Mips/Unix/C emulator for Java
+ * Alexander Slack alexslack56@hotmail.com
+ */
+
+package cfern.fs.tmp;
+import java.io.*;
+import java.nio.*;
+import java.nio.channels.*;
+import cfern.Driver;
+
+/**
+ * A stream using channels, in particular a selectable pipe
+ * @deprecated use Channel instead
+ */
+public class ChannelStream extends Stream {
+  
+  private final InputStream in;
+  private final OutputStream out;
+  private final SelectableChannel outChan;
+  private final SelectableChannel inChan;
+  
+  /**
+   * Constructor for subclasses
+   */
+  public ChannelStream(int major, int minor, final ReadableByteChannel inChan, final WritableByteChannel outChan) {
+    super(major, minor);
+    if (!(outChan instanceof SelectableChannel && inChan instanceof SelectableChannel))
+      throw new RuntimeException("not a selectable channel");
+    this.inChan = (SelectableChannel) inChan;
+    this.outChan = (SelectableChannel) outChan;
+    
+    this.in = new InputStream() {
+      public int available() {
+        // use a selector for channels, not available()
+        throw new RuntimeException("no available on channels");
+      }
+      public int read() throws IOException {
+        byte[] buf = new byte[1];
+        int ret = read(buf, 0, 1);
+        return ret < 0 ? ret : buf[0];
+      }
+      public int read(byte[] buf, int off, int len) throws IOException {
+        //Driver.opt().println("ChannelStream: reading %d bytes...", len);
+        int ret = inChan.read(ByteBuffer.wrap(buf, off, len));
+        Driver.opt().info("ChannelStream: read %d: %s", ret, Driver.toString(buf, off, off + ret));
+        return ret;
+      }
+    };
+    this.out = new OutputStream() {
+      public void write(int b) throws IOException {
+        write(new byte[] { (byte) b }, 0, 1);
+      }
+      public void write(byte[] buf, int off, int len) throws IOException {
+        //Driver.opt().println("ChannelStream: writing %d bytes...", len);
+        outChan.write(ByteBuffer.wrap(buf, off, len));
+        Driver.opt().info("ChannelStream: wrote %s", Driver.toString(buf, off, off + len));
+      }
+    };
+  }
+
+  protected OutputStream out() {
+    return out;
+  }
+  
+  protected InputStream in() {
+    return in;
+  }
+  
+  protected SelectableChannel inChannel() {
+    return inChan;
+  }
+  
+  protected SelectableChannel outChannel() {
+    return outChan;
+  }
+  
+}
