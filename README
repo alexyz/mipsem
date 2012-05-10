@@ -8,3 +8,6 @@ particularly straightforward to create. For a starting binary,
 you can get a statically built busybox without symbols from
 
 http://busybox.net/downloads/binaries/latest/
+
+and put it in the sbin directory which git has helpfully not
+committed as it was empty
