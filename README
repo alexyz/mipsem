@@ -7,7 +7,8 @@ such as GCC, plus a cross compiled glibc, neither of which are
 particularly straightforward to create. For a starting binary,
 you can get a statically built busybox without symbols from
 
-http://busybox.net/downloads/binaries/latest/
+http://busybox.net/downloads/binaries/1.16.0/
 
-and put it in the sbin directory which git has helpfully not
-committed as it was empty
+and put it in the sbin directory
+
+Start the Driver class with argument -w to create a console window
