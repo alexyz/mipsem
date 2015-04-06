@@ -6,8 +6,13 @@
 package cfern.gui;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.File;
+import java.util.Arrays;
+
 import javax.swing.*;
+
 import cfern.Driver;
+import cfern.fs.FileSystem;
 import cfern.sys.*;
 
 /**
@@ -16,6 +21,16 @@ import cfern.sys.*;
  * TODO a log message tab with filters
  */
 public class SwingConsole extends JFrame {
+	
+	private static SwingConsole instance;
+	
+	public static SwingConsole getInstance() {
+		if (instance == null) {
+			instance = new SwingConsole();
+			instance.setVisible(true);
+		}
+		return instance;
+	}
   
   private final JTabbedPane tabs;
   private final SwingProcessList list;
@@ -23,7 +38,7 @@ public class SwingConsole extends JFrame {
   /**
    * Create and display a new swing console
    */
-  public SwingConsole() {
+  private SwingConsole() {
     super("Cfern Console");
     // default layout is BorderLayout
     setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -31,7 +46,6 @@ public class SwingConsole extends JFrame {
     tabs = new JTabbedPane();
     tabs.setFocusable(false);
     add(tabs, BorderLayout.CENTER);
-    newAction();
     
     list = new SwingProcessList();
     JScrollPane listScroller = new JScrollPane(list);
@@ -40,12 +54,41 @@ public class SwingConsole extends JFrame {
     
     setJMenuBar(initMenu());
     
+    setPreferredSize(new Dimension(800,600));
     pack();
-    setVisible(true);
   }
   
   private JMenuBar initMenu() {
     JMenuBar mb = new JMenuBar();
+    
+    JMenuItem runItem = new JMenuItem("Run...");
+    runItem.addActionListener(new ActionListener() {
+		@Override
+		public void actionPerformed (ActionEvent ae) {
+			JFileChooser fc = new JFileChooser();
+			fc.setCurrentDirectory(new File(System.getProperty("user.dir")));
+			int opt = fc.showOpenDialog(SwingConsole.this);
+			if (opt == JFileChooser.APPROVE_OPTION) {
+				String input = JOptionPane.showInputDialog(SwingConsole.this, "Argument", "sh");
+				String term = newAction();
+				try {
+					final FileSystem fs = FileSystem.get();
+					final File f = fc.getSelectedFile();
+					final String up = fs.unixPathFor(f.getAbsolutePath());
+					Driver.start("/dev/" + term, Arrays.asList(up, input), null);
+					final String bin = "/bin/" + f.getName();
+					String ln = fs.symlink(up, bin);
+					JOptionPane.showMessageDialog(SwingConsole.this, "Linked " + bin + " to " + up + ": " + ln);
+				} catch (Exception e) {
+					JOptionPane.showMessageDialog(SwingConsole.this, e.toString());
+				}
+			}
+		}
+	});
+    JMenu fileMenu = new JMenu("File");
+    fileMenu.add(runItem);
+    mb.add(fileMenu);
+    
     JMenu m = new JMenu("Terminal");
     mb.add(m);
     JMenuItem newItem = new JMenuItem("New Terminal");
@@ -83,7 +126,7 @@ public class SwingConsole extends JFrame {
   /**
    * Create a new terminal
    */
-  private String newAction() {
+  public String newAction() {
     int num = tabs.getTabCount() + 1;
     String name = "tty" + num;
     SwingTerminal sterm = new SwingTerminal();
@@ -92,6 +135,7 @@ public class SwingConsole extends JFrame {
         ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, 
         ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     tabs.addTab("/dev/" + name, stermScroll);
+    sterm.requestFocusInWindow();
     
     Terminal term = new Terminal(sterm.source(), sterm.sink(), name, -1);
     Terminals.addTerminal(term);
@@ -103,7 +147,11 @@ public class SwingConsole extends JFrame {
    */
   private void newAshAction() {
     String tty = newAction();
-    Driver.start("/dev/" + tty, null, null);
+    try {
+    	Driver.start("/dev/" + tty, null, null);
+    } catch (Exception e) {
+    	JOptionPane.showMessageDialog(this, e.toString());
+    }
     // doesn't focus terminal
     //tabs.setSelectedIndex(tabs.getTabCount() - 1);
   }

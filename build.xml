@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project default="jar">
+
+	<target name="jar">
+		<jar destfile="dist/cfern.jar">
+			<manifest>
+				<attribute name="Main-Class" value="cfern.DriverW" />
+			</manifest>
+			<fileset dir="bin" />
+		</jar>
+	</target>
+
+	<target name="deploy" depends="jar">
+		<copy file="dist/cfern.jar" tofile="${user.home}/Dropbox/Public/cfern.jar" />
+	</target>
+
+</project>

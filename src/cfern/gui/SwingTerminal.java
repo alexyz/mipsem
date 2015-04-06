@@ -40,7 +40,7 @@ public class SwingTerminal extends JTextArea {
     setForeground(Color.WHITE);
     setCaretColor(Color.WHITE);
     setLineWrap(true);
-    setFont(new Font("Monospaced", Font.PLAIN, 16));
+    setFont(new Font("Monospaced", Font.PLAIN, 14));
     
     addKeyListener(new KeyAdapter() {
       public void keyTyped(KeyEvent e) {

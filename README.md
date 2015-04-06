@@ -1,4 +1,7 @@
-Cfern, a MIPS/Linux/ELF emulator written in Java, 2005
+Cfern
+=
+
+A MIPS/Linux/ELF emulator written in Java, 2005
 
 This project is historical and is not particularly functional
 
@@ -11,4 +14,12 @@ http://busybox.net/downloads/binaries/1.16.0/
 
 and put it in the sbin directory
 
-Start the Driver class with argument -w to create a console window
+Screenshot
+-
+
+![Screenshot](https://dl.dropboxusercontent.com/u/8069847/cfern.png)
+
+Download
+-
+
+[Runnable jar file](https://dl.dropboxusercontent.com/u/8069847/cfern.jar)

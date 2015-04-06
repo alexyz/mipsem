@@ -59,7 +59,7 @@ public class Driver {
    * Enviroment
    */
   // should perhaps be a map
-  private static final ArrayList<String> env = new ArrayList<String>();
+  public static final ArrayList<String> env = new ArrayList<String>();
   
   private static String shell = null;
   
@@ -67,7 +67,7 @@ public class Driver {
    * main, checks arguments, creates initial elfloader, starts the machine running
    * (uses a thread)
    */
-  public static void main (String[] args) {
+  public static void main (String[] args) throws Exception {
     System.setProperty("swing.aatext", "true");
     System.err.println("cwd is " + System.getProperty("user.dir"));
     
@@ -153,8 +153,7 @@ public class Driver {
     String tty = "/dev/console";
     if (gui) {
       // note: need to mount dev before creating consoles
-      new SwingConsole();
-      tty = "/dev/tty1";
+      tty = "/dev/" + SwingConsole.getInstance().newAction();
     }
     
     // get target program arguments
@@ -188,26 +187,15 @@ public class Driver {
    * If args are null or empty, busybox ash is started.
    * If env is null, default enviroment is used.
    */
-  public static void start(final String tty, List<String> args, List<String> env) {
-    if (EventQueue.isDispatchThread()) {
-      // starting up is slow, don't do it in event thread
-      final List<String> fargs = args;
-      final List<String> fenv = env;
-      Thread t = new Thread("start") {
-        public void run() {
-          Driver.start(tty, fargs, fenv);
-        }
-      };
-      t.setPriority(Thread.NORM_PRIORITY);
-      t.start();
-      return;
-    }
-    
+  public static void start(final String tty, List<String> args, List<String> env) throws Exception {
     // no program or args, start default shell
     if (args == null)
       args = new ArrayList<String>(2);
     if (args.size() == 0) {
       // should do something more sensible than this
+    	if (shell == null) {
+    		throw new Exception("no shell");
+    	}
       args.add(shell);
       args.add("ash");
     }
@@ -222,9 +210,8 @@ public class Driver {
       FileDesc uf = FileSystem.get().openex(aprog);
       elf = ElfLoader.loadelf(uf);
     } catch (IOException e) {
-      System.err.println("Driver: Could not load " + prog);
-      e.printStackTrace();
-      return;
+    	e.printStackTrace();
+    	throw new Exception("Driver: Could not load " + prog);
     }
     
     // create machine with pid 1 and ppid 0
@@ -240,7 +227,7 @@ public class Driver {
   /**
    * Put or replace an enviroment variable
    */
-  private static void putenv(String s) {
+  public static void putenv(String s) {
     String name = s.substring(0, s.indexOf('='));
     for (int n = 0; n < env.size(); n++) {
       if (env.get(n).startsWith(name)) {

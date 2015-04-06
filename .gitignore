@@ -1,2 +1,4 @@
 bin
 sbin
+dist
+*.jar
