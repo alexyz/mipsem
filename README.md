@@ -17,9 +17,9 @@ and put it in the sbin directory
 Screenshot
 -
 
-![Screenshot](https://dl.dropboxusercontent.com/u/8069847/cfern.png)
+![Screenshot](cfern.png)
 
 Download
 -
 
-[Runnable jar file](https://dl.dropboxusercontent.com/u/8069847/cfern.jar)
+[Runnable jar file](https://www.dropbox.com/s/i4qvprecei96a1e/cfern.jar?dl=0)
